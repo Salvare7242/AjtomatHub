@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajtomat Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 95%;
+            text-align: center;
+            padding: 40px 20px 60px 20px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f0f0f0;
+            padding: 30px;
+            height: 100%;
+        }
+
+        /* Language Selector */
+        .language-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 50;
+        }
+        .lang-select {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Tabs Styles */
+        .tab-btn {
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background-color: #f59e0b;
+            color: white;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        .tab-btn.inactive {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Converter Styles */
+        .currency-card {
+            border: 2px solid #fbbf24;
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 20px;
+            text-align: left;
+            background: #ffffff;
+        }
+        .currency-label {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #92400e;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .currency-input-container {
+            border: 2px solid #fef3c7;
+            border-radius: 16px;
+            padding: 10px 20px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+        }
+        .currency-input {
+            width: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3.5rem;
+            font-weight: 600;
+            color: #f59e0b;
+            border: none;
+            outline: none;
+            background: transparent;
+        }
+        
+        .currency-select {
+            background: #fef3c7;
+            color: #92400e;
+            font-weight: 800;
+            padding: 8px 16px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        /* Clock Styles */
+        input[type="number"].clock-input {
+            -moz-appearance: textfield;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 10px;
+            width: 75px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .clock-canvas {
+            width: 280px;
+            height: 280px;
+        }
+        .digital-time {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -2px;
+        }
+
+        .hidden { display: none; }
+        
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Language Selector -->
+    <div class="language-container">
+        <select id="langSelector" class="lang-select" onchange="changeLanguage()">
+            <option value="es">🇪🇸 Español</option>
+            <option value="en">🇺🇸 English</option>
+            <option value="zh">🇨🇳 简体中文</option>
+            <option value="zht">🇭🇰 繁體中文</option>
+            <option value="fr">🇫🇷 Français</option>
+            <option value="de">🇩🇪 Deutsch</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <!-- Main Title -->
+        <h1 class="text-5xl md:text-6xl font-extrabold mt-8 mb-8 tracking-tight">Ajtomat Hub</h1>
+
+        <!-- Navigation Tabs -->
+        <div class="flex justify-center gap-4 mb-12">
+            <button id="btnClock" onclick="showTab('clock')" class="tab-btn active" data-i18n="tab_clock">Reloj GMT</button>
+            <button id="btnConverter" onclick="showTab('converter')" class="tab-btn inactive" data-i18n="tab_converter">Conversor de Moneda</button>
+        </div>
+
+        <!-- CLOCK SECTION -->
+        <div id="tabClock">
+            <p class="text-gray-400 text-lg mb-10" data-i18n="clock_subtitle">Ajuste de ciclo y zona horaria (Detección Auto)</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12 text-center">
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                    <p class="font-bold text-sm uppercase tracking-wider text-indigo-600 mb-4" data-i18n="hours_day">Horas Totales del Día</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <input type="number" id="hoursPerDay" class="clock-input" value="24" min="2" max="100" step="2" oninput="updateCycle()">
+                        <span class="text-lg font-semibold" data-i18n="unit_hours">Horas</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100">
+                    <p class="font-bold text-sm uppercase tracking-wider text-indigo-600 mb-4" data-i18n="gmt_adj">Ajuste GMT</p>
+                    <div class="flex items-center justify-center gap-3">
+                        <button id="signBtn" class="bg-white border border-slate-200 w-10 h-10 rounded-lg font-bold" onclick="toggleSign()">+</button>
+                        <input type="number" id="gmtHours" class="clock-input" value="1" min="0" max="14" oninput="updateCycle()">
+                        <span class="text-xl font-bold">:</span>
+                        <input type="number" id="gmtMinutes" class="clock-input" value="0" min="0" max="59" oninput="updateCycle()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                <div class="card flex flex-col justify-center items-center">
+                    <p class="text-xs font-bold text-gray-400 tracking-widest uppercase mb-10" data-i18n="digital_title">Reloj Digital</p>
+                    <div id="digitalClock" class="digital-time">00:00:00</div>
+                    <span id="cycleInfo" class="mt-8 bg-indigo-50 text-indigo-600 px-4 py-1 rounded-full text-xs font-bold uppercase">Ciclo de 24h</span>
+                </div>
+                <div class="card flex flex-col items-center">
+                    <p class="text-xs font-bold text-gray-400 tracking-widest uppercase mb-6" data-i18n="analog_title">Reloj Analógico</p>
+                    <canvas id="analogClock" width="300" height="300" class="clock-canvas"></canvas>
+                    <p id="analogLabel" class="text-gray-400 mt-6 tracking-widest text-xs font-semibold uppercase">Esfera de 12 Horas</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONVERTER SECTION -->
+        <div id="tabConverter" class="hidden">
+            <h2 class="text-4xl font-extrabold text-[#92400e] mb-2 tracking-tight">
+                <span data-i18n="conv_title">Conversor</span> EUR ↔ <span id="targetLabel">YLS</span>
+            </h2>
+            <p class="text-[#f59e0b] font-semibold mb-10 italic" id="rateText">1 YLS = 0.113 EUR</p>
+
+            <div class="max-w-2xl mx-auto">
+                <div class="currency-card">
+                    <label class="currency-label" data-i18n="label_eur">Euros (EUR)</label>
+                    <div class="currency-input-container">
+                        <input type="number" id="inputEUR" class="currency-input" placeholder="0.00" oninput="convert('EUR')">
+                    </div>
+                </div>
+
+                <div class="flex justify-center -my-8 relative z-10">
+                    <div class="bg-[#fef3c7] p-3 rounded-xl border-2 border-[#fbbf24] text-[#92400e] shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+                    </div>
+                </div>
+
+                <div class="currency-card mt-4">
+                    <select id="currencySelector" class="currency-select" onchange="updateRate()">
+                        <option value="YLS">Yalilis (YLS)</option>
+                        <option value="SLV">Salvario (SLV)</option>
+                        <option value="AJT">Ajtorio (AJT)</option>
+                    </select>
+                    <div class="currency-input-container">
+                        <input type="number" id="inputOther" class="currency-input" placeholder="0.00" oninput="convert('OTHER')">
+                    </div>
+                </div>
+
+                <div class="inline-block mt-8 p-6 border-2 border-[#fbbf24] rounded-2xl bg-[#fffcf0]">
+                    <p class="font-bold text-xs uppercase tracking-widest text-[#92400e] mb-3" data-i18n="info_title">Información de la Red</p>
+                    <div id="infoRates" class="text-left text-sm text-[#92400e] space-y-1">
+                        <p>• 1 YLS = 0.113 EUR</p>
+                        <p>• 1 SLV = 0.138 EUR</p>
+                        <p>• 1 AJT = 0.246 EUR</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TRANSLATIONS
+        const translations = {
+            es: {
+                tab_clock: "Reloj GMT",
+                tab_converter: "Conversor de Moneda",
+                clock_subtitle: "Ajuste de ciclo y zona horaria (Detección Auto)",
+                hours_day: "Horas Totales del Día",
+                unit_hours: "Horas",
+                gmt_adj: "Ajuste GMT",
+                digital_title: "Reloj Digital",
+                analog_title: "Reloj Analógico",
+                cycle_prefix: "Ciclo de",
+                dial_prefix: "Esfera de",
+                conv_title: "Conversor",
+                label_eur: "Euros (EUR)",
+                info_title: "Información de la Red"
+            },
+            en: {
+                tab_clock: "GMT Clock",
+                tab_converter: "Currency Converter",
+                clock_subtitle: "Cycle and Timezone Setting (Auto-Detect)",
+                hours_day: "Total Hours per Day",
+                unit_hours: "Hours",
+                gmt_adj: "GMT Adjustment",
+                digital_title: "Digital Clock",
+                analog_title: "Analog Clock",
+                cycle_prefix: "Cycle of",
+                dial_prefix: "Dial of",
+                conv_title: "Converter",
+                label_eur: "Euros (EUR)",
+                info_title: "Network Information"
+            },
+            zh: {
+                tab_clock: "GMT 时钟",
+                tab_converter: "货币转换器",
+                clock_subtitle: "周期和时区设置 (自动检测)",
+                hours_day: "每日总小时数",
+                unit_hours: "小时",
+                gmt_adj: "GMT 调整",
+                digital_title: "数字时钟",
+                analog_title: "模拟时钟",
+                cycle_prefix: "周期",
+                dial_prefix: "表盘",
+                conv_title: "转换器",
+                label_eur: "欧元 (EUR)",
+                info_title: "网络信息"
+            },
+            zht: {
+                tab_clock: "GMT 時鐘",
+                tab_converter: "貨幣轉換器",
+                clock_subtitle: "週期和時區設置 (自動檢測)",
+                hours_day: "每日總小時數",
+                unit_hours: "小時",
+                gmt_adj: "GMT 調整",
+                digital_title: "數字時鐘",
+                analog_title: "模擬時鐘",
+                cycle_prefix: "週期",
+                dial_prefix: "表盤",
+                conv_title: "轉換器",
+                label_eur: "歐元 (EUR)",
+                info_title: "網絡信息"
+            },
+            fr: {
+                tab_clock: "Horloge GMT",
+                tab_converter: "Convertisseur",
+                clock_subtitle: "Réglage du cycle et du fuseau (Auto)",
+                hours_day: "Heures totales par jour",
+                unit_hours: "Heures",
+                gmt_adj: "Ajustement GMT",
+                digital_title: "Horloge Numérique",
+                analog_title: "Horloge Analogique",
+                cycle_prefix: "Cycle de",
+                dial_prefix: "Cadran de",
+                conv_title: "Convertisseur",
+                label_eur: "Euros (EUR)",
+                info_title: "Informations réseau"
+            },
+            de: {
+                tab_clock: "GMT-Uhr",
+                tab_converter: "Währungsrechner",
+                clock_subtitle: "Zyklus- und Zeitzoneneinstellung (Auto)",
+                hours_day: "Gesamtstunden pro Tag",
+                unit_hours: "Stunden",
+                gmt_adj: "GMT-Einstellung",
+                digital_title: "Digitaluhr",
+                analog_title: "Analoguhr",
+                cycle_prefix: "Zyklus von",
+                dial_prefix: "Zifferblatt von",
+                conv_title: "Rechner",
+                label_eur: "Euro (EUR)",
+                info_title: "Netzwerkinformationen"
+            }
+        };
+
+        function changeLanguage() {
+            const lang = document.getElementById('langSelector').value;
+            const t = translations[lang];
+
+            // Translate all elements with data-i18n
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+
+            // Update dynamic labels
+            updateCycle();
+        }
+
+        // TAB LOGIC
+        function showTab(tab) {
+            const tabClock = document.getElementById('tabClock');
+            const tabConverter = document.getElementById('tabConverter');
+            const btnClock = document.getElementById('btnClock');
+            const btnConverter = document.getElementById('btnConverter');
+
+            if (tab === 'clock') {
+                tabClock.classList.remove('hidden');
+                tabConverter.classList.add('hidden');
+                btnClock.className = 'tab-btn active';
+                btnConverter.className = 'tab-btn inactive';
+            } else {
+                tabClock.classList.add('hidden');
+                tabConverter.classList.remove('hidden');
+                btnClock.className = 'tab-btn inactive';
+                btnConverter.className = 'tab-btn active';
+            }
+        }
+
+        // CONVERTER LOGIC
+        const RATES = {
+            YLS: 1 / 8.8496,
+            SLV: 1 / 7.242,
+            AJT: 1 / 4.058
+        };
+
+        function updateRate() {
+            const symbol = document.getElementById('currencySelector').value;
+            document.getElementById('targetLabel').innerText = symbol;
+            let invRate = (1 / RATES[symbol]).toFixed(4);
+            document.getElementById('rateText').innerText = `1 EUR = ${invRate} ${symbol}`;
+            convert('EUR');
+        }
+
+        function convert(source) {
+            const eurInput = document.getElementById('inputEUR');
+            const otherInput = document.getElementById('inputOther');
+            const symbol = document.getElementById('currencySelector').value;
+            const currentRate = RATES[symbol];
+
+            if (source === 'EUR') {
+                const val = parseFloat(eurInput.value);
+                otherInput.value = isNaN(val) ? "" : (val / currentRate).toFixed(2);
+            } else {
+                const val = parseFloat(otherInput.value);
+                eurInput.value = isNaN(val) ? "" : (val * currentRate).toFixed(2);
+            }
+        }
+
+        // CLOCK LOGIC
+        let isPositive = true;
+
+        window.onload = () => {
+            const now = new Date();
+            const offsetMinutes = -now.getTimezoneOffset();
+            isPositive = offsetMinutes >= 0;
+            const absMinutes = Math.abs(offsetMinutes);
+            document.getElementById('gmtHours').value = Math.floor(absMinutes / 60);
+            document.getElementById('gmtMinutes').value = absMinutes % 60;
+            document.getElementById('signBtn').innerText = isPositive ? '+' : '-';
+            
+            updateRate();
+            updateCycle();
+            setInterval(tick, 1000);
+        };
+
+        function toggleSign() {
+            isPositive = !isPositive;
+            document.getElementById('signBtn').innerText = isPositive ? '+' : '-';
+            updateCycle();
+        }
+
+        function updateCycle() {
+            const hpd = parseInt(document.getElementById('hoursPerDay').value) || 24;
+            const lang = document.getElementById('langSelector').value;
+            const t = translations[lang];
+
+            document.getElementById('cycleInfo').innerText = `${t.cycle_prefix} ${hpd}h`;
+            document.getElementById('analogLabel').innerText = `${t.dial_prefix} ${hpd/2} ${t.unit_hours}`;
+            tick();
+        }
+
+        function getSecondsSinceEpoch() {
+            const now = new Date();
+            const gmtH = parseInt(document.getElementById('gmtHours').value) || 0;
+            const gmtM = parseInt(document.getElementById('gmtMinutes').value) || 0;
+            const offsetSeconds = ((gmtH * 3600) + (gmtM * 60)) * (isPositive ? 1 : -1);
+            const utcMillis = now.getTime() + (now.getTimezoneOffset() * 60000);
+            return Math.floor(utcMillis / 1000) + offsetSeconds;
+        }
+
+        function tick() {
+            const totalHoursInDay = parseInt(document.getElementById('hoursPerDay').value) || 24;
+            const secondsInDay = totalHoursInDay * 3600;
+            const currentTotalSeconds = getSecondsSinceEpoch();
+            const secondsIntoCurrentDay = ((currentTotalSeconds % secondsInDay) + secondsInDay) % secondsInDay;
+            
+            const h = Math.floor(secondsIntoCurrentDay / 3600);
+            const m = Math.floor((secondsIntoCurrentDay % 3600) / 60);
+            const s = secondsIntoCurrentDay % 60;
+
+            document.getElementById('digitalClock').innerText = 
+                `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+
+            drawAnalogClock(h, m, s, totalHoursInDay);
+        }
+
+        function drawAnalogClock(h, m, s, totalHours) {
+            const canvas = document.getElementById('analogClock');
+            const ctx = canvas.getContext('2d');
+            const radius = canvas.height / 2;
+            const hoursOnDial = totalHours / 2; 
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(radius, radius);
+
+            ctx.beginPath();
+            ctx.arc(0, 0, radius * 0.88, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 10;
+            ctx.stroke();
+
+            ctx.fillStyle = "#000000";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = `800 18px 'Inter', sans-serif`;
+
+            for (let i = 1; i <= hoursOnDial; i++) {
+                let ang = (i * (2 * Math.PI / hoursOnDial)) - (Math.PI / 2);
+                let x = Math.cos(ang) * (radius * 0.70);
+                let y = Math.sin(ang) * (radius * 0.70);
+                ctx.fillText(i.toString(), x, y);
+                
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(ang) * (radius * 0.80), Math.sin(ang) * (radius * 0.80));
+                ctx.lineTo(Math.cos(ang) * (radius * 0.88), Math.sin(ang) * (radius * 0.88));
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            const hMod = h % hoursOnDial;
+            const hourAng = ((hMod + m/60 + s/3600) / hoursOnDial) * 2 * Math.PI - (Math.PI / 2);
+            const minuteAng = (m / 60) * 2 * Math.PI - (Math.PI / 2);
+            const secondAng = (s / 60) * 2 * Math.PI - (Math.PI / 2);
+
+            drawHand(ctx, hourAng, radius * 0.45, 10, '#000000');
+            drawHand(ctx, minuteAng, radius * 0.65, 6, '#000000');
+            drawHand(ctx, secondAng, radius * 0.75, 2, '#d1d5db');
+
+            ctx.beginPath();
+            ctx.arc(0, 0, 7, 0, 2 * Math.PI);
+            ctx.fillStyle = "#000000";
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawHand(ctx, angle, length, width, color) {
+            ctx.beginPath();
+            ctx.lineWidth = width;
+            ctx.lineCap = "round";
+            ctx.strokeStyle = color;
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * length, Math.sin(angle) * length);
+            ctx.stroke();
+        }
+    </script>
+</body>
+</html>
